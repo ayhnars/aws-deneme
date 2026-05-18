@@ -1,0 +1,20 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## IDE
+.idea/
+.vscode/
+
+## OS
+.DS_Store
+
+## Node / Frontend
+MiniERP.Web/node_modules/
+MiniERP.Web/dist/
+
+## Docker
+postgres_data/
