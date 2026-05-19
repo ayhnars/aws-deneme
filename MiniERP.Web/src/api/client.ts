@@ -1,14 +1,25 @@
 import type { ApiError } from '../types'
 
-/** Origin only — no trailing slash (e.g. http://51.20.54.128). Empty in local dev → Vite proxy. */
-export const API_BASE = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/+$/, '')
+/**
+ * API base (no trailing slash)
+ * Example: http://51.20.54.128
+ */
+export const API_BASE = (import.meta.env.VITE_API_URL ?? '')
+  .trim()
+  .replace(/\/+$/, '')
 
-/** Safe join: `${API_BASE}/api/Auth/login` — never `hostapi/...` or double slashes. */
+/**
+ * Safe URL builder
+ * Ensures: http://host/api/Auth/login
+ */
 export function apiUrl(path: string): string {
-  const segment = path.startsWith('/') ? path : `/${path}`
-  return API_BASE ? `${API_BASE}${segment}` : segment
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return API_BASE ? `${API_BASE}${normalizedPath}` : normalizedPath
 }
 
+/**
+ * API ENDPOINTS (STRICT RULE: always start with /api)
+ */
 export const API_PATHS = {
   auth: {
     login: '/api/Auth/login',
@@ -18,14 +29,12 @@ export const API_PATHS = {
   stockMovements: '/api/StockMovements',
 } as const
 
+// =========================
+// AUTH HELPERS
+// =========================
+
 export function getToken(): string | null {
   return localStorage.getItem('minierp_token')
-}
-
-export function clearAuth() {
-  setToken(null)
-  setStoredUser(null)
-  window.dispatchEvent(new Event('minierp:logout'))
 }
 
 export function setToken(token: string | null) {
@@ -36,17 +45,36 @@ export function setToken(token: string | null) {
 export function getStoredUser() {
   const raw = localStorage.getItem('minierp_user')
   if (!raw) return null
+
   try {
-    return JSON.parse(raw) as { email: string; fullName: string; role: string }
+    return JSON.parse(raw) as {
+      email: string
+      fullName: string
+      role: string
+    }
   } catch {
     return null
   }
 }
 
-export function setStoredUser(user: { email: string; fullName: string; role: string } | null) {
+export function setStoredUser(user: {
+  email: string
+  fullName: string
+  role: string
+} | null) {
   if (user) localStorage.setItem('minierp_user', JSON.stringify(user))
   else localStorage.removeItem('minierp_user')
 }
+
+export function clearAuth() {
+  setToken(null)
+  setStoredUser(null)
+  window.dispatchEvent(new Event('minierp:logout'))
+}
+
+// =========================
+// CORE REQUEST WRAPPER
+// =========================
 
 async function request<T>(
   path: string,
@@ -58,6 +86,7 @@ async function request<T>(
     ...(options.headers as Record<string, string>),
   }
 
+  // AUTH HEADER
   if (auth) {
     const token = getToken()
     if (!token) {
@@ -67,19 +96,30 @@ async function request<T>(
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const res = await fetch(apiUrl(path), { ...options, headers })
+  const url = apiUrl(path)
+
+  // DEBUG (VERY IMPORTANT)
+  console.log('[API REQUEST]', url)
+
+  const res = await fetch(url, { ...options, headers })
 
   if (!res.ok) {
-    let body: ApiError & { title?: string; errors?: Record<string, string[]> } = {}
+    let body: ApiError & {
+      title?: string
+      errors?: Record<string, string[]>
+    } = {}
+
     try {
       body = await res.json()
     } catch {
-      /* empty */
+      // ignore
     }
 
     if (res.status === 401 && auth) {
       clearAuth()
-      throw new Error(body.message ?? 'Oturum geçersiz veya süresi doldu. Lütfen tekrar giriş yapın.')
+      throw new Error(
+        body.message ?? 'Oturum süresi doldu. Lütfen tekrar giriş yapın.'
+      )
     }
 
     if (body.errors) {
@@ -87,20 +127,42 @@ async function request<T>(
       throw new Error(details || body.title || `HTTP ${res.status}`)
     }
 
-    throw new Error(body.message ?? body.error ?? body.title ?? `HTTP ${res.status}`)
+    throw new Error(
+      body.message ?? body.error ?? body.title ?? `HTTP ${res.status}`
+    )
   }
 
   if (res.status === 204) return undefined as T
+
   const text = await res.text()
-  if (!text) return undefined as T
-  return JSON.parse(text) as T
+  return text ? (JSON.parse(text) as T) : (undefined as T)
 }
+
+// =========================
+// API METHODS
+// =========================
 
 export const api = {
   get: <T>(path: string) => request<T>(path),
+
   post: <T>(path: string, body: unknown, auth = true) =>
-    request<T>(path, { method: 'POST', body: JSON.stringify(body) }, auth),
+    request<T>(
+      path,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+      auth
+    ),
+
   put: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
-  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+    request<T>(path, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+
+  delete: <T>(path: string) =>
+    request<T>(path, {
+      method: 'DELETE',
+    }),
 }
