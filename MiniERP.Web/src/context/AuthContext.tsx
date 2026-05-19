@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { api, clearAuth, getStoredUser, getToken, setStoredUser, setToken } from '../api/client'
+import { api, API_PATHS, clearAuth, getStoredUser, getToken, setStoredUser, setToken } from '../api/client'
 import type { AuthResponse } from '../types'
 
 interface AuthContextValue {
@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await api.post<AuthResponse>(
-      '/api/Auth/login',
+      API_PATHS.auth.login,
       { email, password },
       false
     )

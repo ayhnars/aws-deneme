@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
-import { api } from '../api/client'
+import { api, API_PATHS } from '../api/client'
 import type { Product, ProductCreate } from '../types'
 
 const emptyForm: ProductCreate = {
@@ -21,7 +21,7 @@ export function ProductsPage() {
     setLoading(true)
     setError('')
     try {
-      const data = await api.get<Product[]>('/api/products')
+      const data = await api.get<Product[]>(API_PATHS.products)
       setProducts(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Yüklenemedi')
@@ -78,9 +78,9 @@ export function ProductsPage() {
 
     try {
       if (editingId) {
-        await api.put(`/api/products/${editingId}`, payload)
+        await api.put(`${API_PATHS.products}/${editingId}`, payload)
       } else {
-        await api.post('/api/products', payload)
+        await api.post(API_PATHS.products, payload)
       }
       setShowForm(false)
       await load()
@@ -92,7 +92,7 @@ export function ProductsPage() {
   async function handleDelete(id: number) {
     if (!confirm('Bu ürünü silmek istediğinize emin misiniz?')) return
     try {
-      await api.delete(`/api/products/${id}`)
+      await api.delete(`${API_PATHS.products}/${id}`)
       await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Silinemedi')

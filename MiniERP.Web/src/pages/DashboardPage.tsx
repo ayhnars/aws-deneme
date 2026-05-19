@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api } from '../api/client'
+import { api, API_PATHS } from '../api/client'
 import type { Product, StockMovement } from '../types'
 import { isMovementIn } from '../types'
 
@@ -11,8 +11,8 @@ export function DashboardPage() {
 
   useEffect(() => {
     Promise.all([
-      api.get<Product[]>('/api/products'),
-      api.get<StockMovement[]>('/api/stockmovements'),
+      api.get<Product[]>(API_PATHS.products),
+      api.get<StockMovement[]>(API_PATHS.stockMovements),
     ])
       .then(([p, m]) => {
         setProducts(p)

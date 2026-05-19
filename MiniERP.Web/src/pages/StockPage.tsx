@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
-import { api } from '../api/client'
+import { api, API_PATHS } from '../api/client'
 import type { Product, StockMovement, StockMovementCreate } from '../types'
 import { isMovementIn, movementTypeToApi } from '../types'
 
@@ -19,8 +19,8 @@ export function StockPage() {
     setError('')
     try {
       const [m, p] = await Promise.all([
-        api.get<StockMovement[]>('/api/stockmovements'),
-        api.get<Product[]>('/api/products'),
+        api.get<StockMovement[]>(API_PATHS.stockMovements),
+        api.get<Product[]>(API_PATHS.products),
       ])
       setMovements(m)
       setProducts(p)
@@ -41,7 +41,7 @@ export function StockPage() {
     e.preventDefault()
     setError('')
     try {
-      await api.post('/api/stockmovements', {
+      await api.post(API_PATHS.stockMovements, {
         productId: form.productId,
         quantity: form.quantity,
         movementType: movementTypeToApi(form.movementType),

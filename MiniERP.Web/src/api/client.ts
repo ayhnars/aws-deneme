@@ -1,6 +1,22 @@
 import type { ApiError } from '../types'
 
-const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+/** Origin only — no trailing slash (e.g. http://51.20.54.128). Empty in local dev → Vite proxy. */
+export const API_BASE = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/+$/, '')
+
+/** Safe join: `${API_BASE}/api/Auth/login` — never `hostapi/...` or double slashes. */
+export function apiUrl(path: string): string {
+  const segment = path.startsWith('/') ? path : `/${path}`
+  return API_BASE ? `${API_BASE}${segment}` : segment
+}
+
+export const API_PATHS = {
+  auth: {
+    login: '/api/Auth/login',
+    register: '/api/Auth/register',
+  },
+  products: '/api/Products',
+  stockMovements: '/api/StockMovements',
+} as const
 
 export function getToken(): string | null {
   return localStorage.getItem('minierp_token')
@@ -51,7 +67,7 @@ async function request<T>(
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers })
+  const res = await fetch(apiUrl(path), { ...options, headers })
 
   if (!res.ok) {
     let body: ApiError & { title?: string; errors?: Record<string, string[]> } = {}
