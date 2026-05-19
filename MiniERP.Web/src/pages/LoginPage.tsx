@@ -13,6 +13,7 @@ export function LoginPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    console.log(import.meta.env.VITE_API_URL)
     setError('')
     setLoading(true)
     try {
