@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import type { Product, StockMovement } from '../types'
+import { isMovementIn } from '../types'
 
 export function DashboardPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -76,8 +77,8 @@ export function DashboardPage() {
                   <tr key={m.id}>
                     <td>{m.productName}</td>
                     <td>
-                      <span className={`badge ${m.movementType === 'In' ? 'in' : 'out'}`}>
-                        {m.movementType === 'In' ? 'Giriş' : 'Çıkış'}
+                      <span className={`badge ${isMovementIn(m.movementType) ? 'in' : 'out'}`}>
+                        {isMovementIn(m.movementType) ? 'Giriş' : 'Çıkış'}
                       </span>
                     </td>
                     <td>{m.quantity}</td>

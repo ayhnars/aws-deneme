@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import type { Product, StockMovement, StockMovementCreate } from '../types'
+import { isMovementIn, movementTypeToApi } from '../types'
 
 export function StockPage() {
   const [movements, setMovements] = useState<StockMovement[]>([])
@@ -40,7 +41,11 @@ export function StockPage() {
     e.preventDefault()
     setError('')
     try {
-      await api.post('/api/stockmovements', form)
+      await api.post('/api/stockmovements', {
+        productId: form.productId,
+        quantity: form.quantity,
+        movementType: movementTypeToApi(form.movementType),
+      })
       setForm((f) => ({ ...f, quantity: 1 }))
       await load()
     } catch (err) {
@@ -126,8 +131,8 @@ export function StockPage() {
                   <td>{new Date(m.createdAt).toLocaleString('tr-TR')}</td>
                   <td>{m.productName}</td>
                   <td>
-                    <span className={`badge ${m.movementType === 'In' ? 'in' : 'out'}`}>
-                      {m.movementType === 'In' ? 'Giriş' : 'Çıkış'}
+                    <span className={`badge ${isMovementIn(m.movementType) ? 'in' : 'out'}`}>
+                      {isMovementIn(m.movementType) ? 'Giriş' : 'Çıkış'}
                     </span>
                   </td>
                   <td>{m.quantity}</td>

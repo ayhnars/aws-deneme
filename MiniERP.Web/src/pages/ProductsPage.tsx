@@ -54,11 +54,33 @@ export function ProductsPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
+
+    const name = form.name.trim()
+    if (!name) {
+      setError('Ürün adı zorunludur.')
+      return
+    }
+    if (!Number.isFinite(form.price) || form.price < 0) {
+      setError('Geçerli bir fiyat girin.')
+      return
+    }
+    if (!Number.isFinite(form.stockQuantity) || form.stockQuantity < 0) {
+      setError('Geçerli bir stok miktarı girin.')
+      return
+    }
+
+    const payload = {
+      name,
+      description: form.description?.trim() || null,
+      price: form.price,
+      stockQuantity: form.stockQuantity,
+    }
+
     try {
       if (editingId) {
-        await api.put(`/api/products/${editingId}`, form)
+        await api.put(`/api/products/${editingId}`, payload)
       } else {
-        await api.post('/api/products', form)
+        await api.post('/api/products', payload)
       }
       setShowForm(false)
       await load()

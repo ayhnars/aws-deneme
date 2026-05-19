@@ -21,19 +21,31 @@ export interface ProductCreate {
   stockQuantity: number
 }
 
+export type MovementTypeName = 'In' | 'Out'
+/** API accepts enum as number (0 = In, 1 = Out) until string JSON is enabled. */
+export type MovementTypeApi = 0 | 1
+
+export function movementTypeToApi(name: MovementTypeName): MovementTypeApi {
+  return name === 'In' ? 0 : 1
+}
+
+export function isMovementIn(type: MovementTypeName | MovementTypeApi): boolean {
+  return type === 'In' || type === 0
+}
+
 export interface StockMovement {
   id: number
   productId: number
   productName: string
   quantity: number
-  movementType: 'In' | 'Out'
+  movementType: MovementTypeName | MovementTypeApi
   createdAt: string
 }
 
 export interface StockMovementCreate {
   productId: number
   quantity: number
-  movementType: 'In' | 'Out'
+  movementType: MovementTypeName
 }
 
 export interface ApiError {

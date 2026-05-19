@@ -2,8 +2,14 @@ import type { ApiError } from '../types'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? ''
 
-function getToken(): string | null {
+export function getToken(): string | null {
   return localStorage.getItem('minierp_token')
+}
+
+export function clearAuth() {
+  setToken(null)
+  setStoredUser(null)
+  window.dispatchEvent(new Event('minierp:logout'))
 }
 
 export function setToken(token: string | null) {
@@ -38,19 +44,34 @@ async function request<T>(
 
   if (auth) {
     const token = getToken()
-    if (token) headers['Authorization'] = `Bearer ${token}`
+    if (!token) {
+      clearAuth()
+      throw new Error('Oturum bulunamadı. Lütfen tekrar giriş yapın.')
+    }
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers })
 
   if (!res.ok) {
-    let body: ApiError = {}
+    let body: ApiError & { title?: string; errors?: Record<string, string[]> } = {}
     try {
       body = await res.json()
     } catch {
       /* empty */
     }
-    throw new Error(body.message ?? body.error ?? `HTTP ${res.status}`)
+
+    if (res.status === 401 && auth) {
+      clearAuth()
+      throw new Error(body.message ?? 'Oturum geçersiz veya süresi doldu. Lütfen tekrar giriş yapın.')
+    }
+
+    if (body.errors) {
+      const details = Object.values(body.errors).flat().join(' ')
+      throw new Error(details || body.title || `HTTP ${res.status}`)
+    }
+
+    throw new Error(body.message ?? body.error ?? body.title ?? `HTTP ${res.status}`)
   }
 
   if (res.status === 204) return undefined as T
