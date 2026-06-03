@@ -86,7 +86,9 @@ builder.Services.AddCors(options =>
                 "http://localhost:5173",
                 "http://127.0.0.1:5173",
                 "http://localhost:3000",
-                "http://127.0.0.1:3000")
+                "http://127.0.0.1:3000",
+                "http://51.20.51.132",
+                "http://51.20.51.132:3000")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -97,7 +99,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    // db.Database.Migrate();
     await DbSeeder.SeedAsync(db);
 }
 
